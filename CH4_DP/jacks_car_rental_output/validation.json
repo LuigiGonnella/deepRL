@@ -1,0 +1,42 @@
+{
+  "original": {
+    "policy_improvements": 4,
+    "bellman_optimality_residual": 8.265033102361485e-11,
+    "max_difference_from_value_iteration": 2.432898327242583e-11,
+    "V_0_0": 421.41406339569033,
+    "V_20_20": 636.989606803545,
+    "policy_action_counts": {
+      "-5": 0,
+      "-4": 3,
+      "-3": 9,
+      "-2": 14,
+      "-1": 17,
+      "0": 270,
+      "1": 33,
+      "2": 29,
+      "3": 23,
+      "4": 17,
+      "5": 26
+    }
+  },
+  "modified": {
+    "policy_improvements": 3,
+    "bellman_optimality_residual": 8.230927051045e-11,
+    "max_difference_from_value_iteration": 4.388311936054379e-11,
+    "V_0_0": 429.94626448463026,
+    "V_20_20": 603.49134362858,
+    "policy_action_counts": {
+      "-5": 7,
+      "-4": 11,
+      "-3": 14,
+      "-2": 16,
+      "-1": 28,
+      "0": 115,
+      "1": 154,
+      "2": 29,
+      "3": 25,
+      "4": 18,
+      "5": 24
+    }
+  }
+}
