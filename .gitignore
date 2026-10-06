@@ -1,1 +1,20 @@
-.venv
+__pycache__/
+*.pyc
+.git/
+.venv/
+*.egg-info/
+wandb/
+.vscode/
+.idea/
+.DS_Store
+.env
+
+# Data artifacts
+/data/
+checkpoints/
+videos/
+*.zip
+exp/
+
+# Modal logs/artifacts
+modal_volume/
