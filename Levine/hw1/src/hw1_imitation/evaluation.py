@@ -81,6 +81,7 @@ def encode_video(frames: list[np.ndarray], fps: int = 20) -> wandb.Video | None:
     try:
         with imageio.get_writer(
             tmp_path,
+            format="FFMPEG",
             fps=fps,
             codec="libx264",
             macro_block_size=1,
