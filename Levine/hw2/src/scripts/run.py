@@ -7,6 +7,7 @@ import gym
 import numpy as np
 import torch
 import tqdm
+import wandb
 
 from agents.pg_agent import PGAgent
 from infrastructure import utils
@@ -59,17 +60,19 @@ def run_training_loop(logger, args):
 
     for itr in range(args.n_iter):
         print(f"\n********** Iteration {itr} ************")
-        # TODO: sample `args.batch_size` transitions using utils.sample_trajectories
+        # sample `args.batch_size` transitions using utils.sample_trajectories
         # make sure to use `max_ep_len`
-        trajs, envsteps_this_batch = None, None
+        trajs, envsteps_this_batch = utils.sample_trajectories(env, agent.actor, args.batch_size, max_ep_len)
         total_envsteps += envsteps_this_batch
+
+        
 
         # trajs should be a list of dictionaries of NumPy arrays, where each dictionary corresponds to a trajectory.
         # this line converts this into a single dictionary of lists of NumPy arrays.
         trajs_dict = {k: [traj[k] for traj in trajs] for k in trajs[0]}
 
-        # TODO: train the agent using the sampled trajectories and the agent's update function
-        train_info: dict = None
+        # train the agent using the sampled trajectories and the agent's update function
+        train_info: dict = agent.update(trajs_dict['observation'], trajs_dict['action'], trajs_dict['reward'], trajs_dict['terminal'])
 
         if itr % args.scalar_log_freq == 0:
             # save eval metrics
@@ -157,6 +160,18 @@ def main(args):
 
     config = vars(args)
     setup_wandb(project='cs285_hw2', name=exp_name, config=config)
+    wandb.define_metric("Train_EnvstepsSoFar")
+
+    wandb.define_metric(
+        "Eval_AverageReturn",
+        step_metric="Train_EnvstepsSoFar",
+    )
+
+    wandb.define_metric(
+        "Train_AverageReturn",
+        step_metric="Train_EnvstepsSoFar",
+    )
+
     args.save_dir = os.path.join(logdir_prefix, exp_name)
     os.makedirs(args.save_dir, exist_ok=True)
     logger = Logger(os.path.join(args.save_dir, 'log.csv'))

@@ -59,30 +59,43 @@ class MLPPolicy(nn.Module):
     @torch.no_grad()
     def get_action(self, obs: np.ndarray) -> np.ndarray:
         """Takes a single observation (as a numpy array) and returns a single action (as a numpy array)."""
-        # TODO: implement get_action
-        action = None
+        obs = np.asarray(obs)
 
-        return action
+        if obs.ndim == 1:
+            obs = obs[None, :]  # (ob_dim,) -> (1, ob_dim)
 
-    def forward(self, obs: torch.FloatTensor):
+        distribution = self(ptu.from_numpy(obs))
+        action = distribution.sample()
+
+        return ptu.to_numpy(action)
+
+    def forward(self, obs: torch.FloatTensor) -> torch.FloatTensor:
         """
         This function defines the forward pass of the network.  You can return anything you want, but you should be
         able to differentiate through it. For example, you can return a torch.FloatTensor. You can also return more
         flexible objects, such as a `torch.distributions.Distribution` object. It's up to you!
         """
+
+        # Categorical gestisce internamente la normalizzazione dei logits. Per le azioni continue, Independent(..., 1) considera l’intero vettore come un’unica azione, sommando le log-probabilità delle coordinate. Ottieni quindi log_prob(actions) di shape (B,) in entrambi i casi.
+
         if self.discrete:
-            # TODO: define the forward pass for a policy with a discrete action space.
-            pass
-        else:
-            # TODO: define the forward pass for a policy with a continuous action space.
-            pass
+            logits = self.logits_net(obs)  # (B, ac_dim)
+            return D.Categorical(logits=logits)
+
+        
+        mean = self.mean_net(obs)
+        std = self.logstd.exp()
+
+        return D.Independent(D.Normal(mean, std), 1)
+
+        
 
     def update(self, obs: np.ndarray, actions: np.ndarray, *args, **kwargs) -> dict:
         """
         Performs one iteration of gradient descent on the provided batch of data. You don't need to implement this
         method in the base class, but you do need to implement it in the subclass.
         """
-        raise NotImplementedError
+    
 
 
 class MLPPolicyPG(MLPPolicy):
@@ -95,15 +108,23 @@ class MLPPolicyPG(MLPPolicy):
         advantages: np.ndarray,
     ) -> dict:
         """Implements the policy gradient actor update."""
-        obs = ptu.from_numpy(obs)
-        actions = ptu.from_numpy(actions)
-        advantages = ptu.from_numpy(advantages)
+        obs_t = ptu.from_numpy(obs)
+        advantages_t = ptu.from_numpy(advantages).reshape(-1)
 
-        # TODO: compute the policy gradient actor loss
-        loss = None
+        if self.discrete:
+            actions_t = ptu.from_numpy(actions).long().reshape(-1)
+        else:
+            actions_t = ptu.from_numpy(actions).reshape(obs_t.shape[0], -1)
 
-        # TODO: perform an optimizer step
-        pass
+        distribution = self(obs_t)
+        log_probs = distribution.log_prob(actions_t)  # (B,)
+
+        self.optimizer.zero_grad()
+        # compute the policy gradient actor loss
+        loss = -(log_probs * advantages_t).mean()
+
+        loss.backward()
+        self.optimizer.step()
 
         return {
             "Actor Loss": loss.item(),
