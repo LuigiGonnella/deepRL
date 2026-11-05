@@ -38,7 +38,7 @@ def sample_trajectory(
             ac = int(ac)
 
         # take that action and get reward and next ob
-        next_ob, rew, terminated, truncated, info = env.step(ac)
+        next_ob, rew, terminated, truncated, _ = env.step(ac)
 
         steps += 1
         rollout_done = terminated or truncated or steps >= max_length
